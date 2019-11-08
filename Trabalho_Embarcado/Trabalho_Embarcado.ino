@@ -1,16 +1,19 @@
+//Inclusâo da biblioteca de conexao por wifi
 #include <ESP8266WiFi.h>
+
 //Define os pinos dos componentes usados
 #define pinoSensorLuminosidade A0
 #define pinoLedGroove D7
 
 //Define os limites de luminosidade a serem usados 
-int limiteEscuro = 100;
-int limiteClaro = 500;
+int limiteEscuro = 300;
+int limiteClaro = 800;
 
 int valorObservado;
+char* nivelLuminosidade;
 
-const char* ssid = "Marcia";
-const char* password = "99094129";
+const char* ssid = "Mi Phone";
+const char* password = "matheus123";
 
 WiFiServer server(80);
 
@@ -55,17 +58,22 @@ void setup() {
 void loop() {
   delay(1000);
   
+  //Recebe o valor do sensor de luminosidade
   valorObservado = analogRead(pinoSensorLuminosidade);
-   
+
+  //Verifica o nível 
   if(valorObservado < limiteClaro){
     if(valorObservado < limiteEscuro){
+      nivelLuminosidade = "ESCURO";
       //Não acende o LED
       digitalWrite(pinoLedGroove, LOW);
       }else{
+        nivelLuminosidade = "AMENO";
         //Acende  o LED sólido
         digitalWrite(pinoLedGroove, HIGH);
         }
   }else{
+    nivelLuminosidade = "CLARO";
     //Pisca o LED três vezes
     digitalWrite(pinoLedGroove, HIGH);
     delay(500);
@@ -85,22 +93,25 @@ void loop() {
   if (!client) {
     return;
   }
-
-  Serial.println("Novo cliente");
+  //Manda aviso de nova consulta pela porta serial
+  Serial.println("Nova consulta");
   while(!client.available()){
     delay(1);
   }
-
+   //Recebe pedido do cliente
    String request = client.readStringUntil('\r');
    Serial.println(request);
    
-
+   //Monta página HTML de resposta
    client.println("HTTP/1.1 200 OK");
    client.println("Content-Type: text/html");
    client.println(""); 
    client.println("<!DOCTYPE HTML>");
    client.println("<html>");
    client.println("<HEAD><meta http-equiv=\"refresh\" content=\"1\"></HEAD>");
+   client.print("Nivel de luminosidade: ");
+   client.print(nivelLuminosidade);
+   client.println("<br><br>");
    client.print("Valor observado pelo sensor: ");
    client.print(valorObservado);
    client.println("<br><br>");
